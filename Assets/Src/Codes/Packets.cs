@@ -61,9 +61,12 @@ public class CommonPacket
 
 [ProtoContract]
 public class LocationUpdatePayload {
-    [ProtoMember(1, IsRequired = true)]
-    public float x { get; set; }
+    [ProtoMember(1)]
+    public string gameId { get; set; }
+
     [ProtoMember(2, IsRequired = true)]
+    public float x { get; set; }
+    [ProtoMember(3, IsRequired = true)]
     public float y { get; set; }
 }
 
