@@ -102,7 +102,7 @@ public class NetworkManager : MonoBehaviour
     void StartGame()
     {
         // 게임 시작 코드 작성
-        Debug.Log("Game Started");
+        Debug.Log("[StartGame] on StartGame");
         StartReceiving(); // Start receiving data
         SendInitialPacket();
     }
@@ -199,6 +199,8 @@ public class NetworkManager : MonoBehaviour
     public void SendLocationUpdatePacket(float x, float y) {
         LocationUpdatePayload locationUpdatePayload = new LocationUpdatePayload
         {
+            // 임시 게임아이디
+            gameId = GameManager.instance.deviceId,
             x = x,
             y = y,
         };
@@ -265,6 +267,7 @@ public class NetworkManager : MonoBehaviour
         var response = Packets.Deserialize<Response>(packetData);
         Debug.Log($"HandlerId: {response.handlerId}, responseCode: {response.responseCode}, timestamp: {response.timestamp}");
         
+        // 서버로부터 온 응답코드가 잘못됨
         if (response.responseCode != 0 && !uiNotice.activeSelf) {
             AudioManager.instance.PlaySfx(AudioManager.Sfx.LevelUp);
             // 2: server error 알림
@@ -272,6 +275,7 @@ public class NetworkManager : MonoBehaviour
             return;
         }
 
+        // 응답 데이터가 유효하게 존재하면
         if (response.data != null && response.data.Length > 0) {
             if (response.handlerId == 0) {
                 GameManager.instance.GameStart();
@@ -305,6 +309,19 @@ public class NetworkManager : MonoBehaviour
             Spawner.instance.Spawn(response);
         } catch (Exception e) {
             Debug.LogError($"Error HandleLocationPacket: {e.Message}");
+        }
+    }
+
+    // Ping 패킷 처리
+    void HandlePingPacket(byte[] data)
+    {
+        try
+        {
+
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"Error HandlePingPacket: {e.Message}");
         }
     }
 }
