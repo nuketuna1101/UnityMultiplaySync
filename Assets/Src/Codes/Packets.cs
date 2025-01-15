@@ -4,13 +4,15 @@ using System.IO;
 using System.Buffers;
 using System.Collections.Generic;
 using System;
+using ProtoBuf.WellKnownTypes;
 
 public class Packets : MonoBehaviour
 {
     public enum PacketType { Ping, Normal, Location = 3 }
     public enum HandlerIds {
         Init = 0,
-        LocationUpdate = 2 
+        LocationUpdate = 2,
+        CreateGame = 4,
     }
 
     public static void Serialize<T>(IBufferWriter<byte> writer, T data)
@@ -66,9 +68,18 @@ public class LocationUpdatePayload {
 
     [ProtoMember(2, IsRequired = true)]
     public float x { get; set; }
+
     [ProtoMember(3, IsRequired = true)]
     public float y { get; set; }
 }
+
+[ProtoContract]
+public class CreateGamePayload
+{
+    [ProtoMember(1)]
+    public Timestamp timestamp { get; set; }
+}
+
 
 [ProtoContract]
 public class LocationUpdate

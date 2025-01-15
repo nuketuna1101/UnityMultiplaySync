@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -147,6 +148,10 @@ public class NetworkManager : MonoBehaviour
         return header;
     }
 
+
+    #region Packet Sending 
+    //=======================================================================================================
+
     // 공통 패킷 생성 함수
     async void SendPacket<T>(T payload, uint handlerId)
     {
@@ -158,7 +163,8 @@ public class NetworkManager : MonoBehaviour
         CommonPacket commonPacket = new CommonPacket
         {
             handlerId = handlerId,
-            userId = GameManager.instance.deviceId,
+            //userId = GameManager.instance.deviceId,// 유저 아이디는 
+            userId = GameManager.instance.userId,
             version = GameManager.instance.version,
             payload = payloadData,
         };
@@ -207,6 +213,19 @@ public class NetworkManager : MonoBehaviour
 
         SendPacket(locationUpdatePayload, (uint)Packets.HandlerIds.LocationUpdate);
     }
+
+    // 게임 생성 패킷 전송
+    public void SendCreateGamePacket()
+    {
+        CreateGamePayload createGamePayload = new CreateGamePayload
+        {
+            timestamp = DateTime.Now,
+        };
+
+        SendPacket(createGamePayload, (uint)Packets.HandlerIds.CreateGame);
+    }
+    //=======================================================================================================
+    #endregion
 
     // 패킷 수신 시작
     void StartReceiving() {
@@ -277,8 +296,20 @@ public class NetworkManager : MonoBehaviour
 
         // 응답 데이터가 유효하게 존재하면
         if (response.data != null && response.data.Length > 0) {
+            // init 패킷 응답
             if (response.handlerId == 0) {
                 GameManager.instance.GameStart();
+                string stringUserId = Encoding.UTF8.GetString(response.data);
+                Debug.Log("[InitialResponse] stringUserId: " + stringUserId);
+                string userId = ParseResponseData(response.data, "userId");
+                Debug.Log("[InitialResponse] UserId: " + userId);
+                GameManager.instance.SetUserId(userId);
+                // 게임 생성 패킷 전송
+                SendCreateGamePacket();
+            }
+            if (response.handlerId == 4)
+            {
+                Debug.Log("[CreateGameResponse] create game response");
             }
             ProcessResponseData(response.data);
         }
@@ -291,6 +322,53 @@ public class NetworkManager : MonoBehaviour
             Debug.Log($"Processed SpecificDataType: {jsonString}");
         } catch (Exception e) {
             Debug.LogError($"Error processing response data: {e.Message}");
+        }
+    }
+
+
+    string ParseResponseData(byte[] data, string targetKey)
+    {
+        try
+        {
+            // 바이트 배열을 문자열로 변환
+            string jsonString = Encoding.UTF8.GetString(data);
+
+            // 특정 키를 검색
+            string keyPattern = $"\"{targetKey}\":";
+            int keyIndex = jsonString.IndexOf(keyPattern);
+
+            if (keyIndex == -1)
+            {
+                Debug.LogWarning($"Key '{targetKey}' not found in response data.");
+                return null;
+            }
+
+            // 값의 시작 위치 계산
+            int valueStartIndex = keyIndex + keyPattern.Length;
+
+            // 값이 따옴표로 묶여 있는 경우 처리
+            bool isQuoted = jsonString[valueStartIndex] == '\"';
+            if (isQuoted) valueStartIndex++;
+
+            // 값의 끝 위치 찾기
+            int valueEndIndex = isQuoted
+                ? jsonString.IndexOf('\"', valueStartIndex)  // 따옴표로 묶인 값
+                : jsonString.IndexOfAny(new char[] { ',', '}' }, valueStartIndex);  // 숫자 등 단순 값
+
+            if (valueEndIndex == -1)
+            {
+                Debug.LogWarning($"Value for key '{targetKey}' could not be determined.");
+                return null;
+            }
+
+            // 값 추출 및 반환
+            string value = jsonString.Substring(valueStartIndex, valueEndIndex - valueStartIndex);
+            return value;
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"Error parsing response data: {e.Message}");
+            return null;
         }
     }
 

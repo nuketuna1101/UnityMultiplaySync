@@ -16,6 +16,7 @@ public class GameManager : MonoBehaviour
     [Header("# Player Info")]
     public uint playerId;
     public string deviceId;
+    public string userId;
 
     [Header("# Game Object")]
     public PoolManager pool;
@@ -66,5 +67,10 @@ public class GameManager : MonoBehaviour
             return;
         }
         gameTime += Time.deltaTime;
+    }
+
+    public void SetUserId(string userId)
+    {
+        this.userId = userId;
     }
 }
