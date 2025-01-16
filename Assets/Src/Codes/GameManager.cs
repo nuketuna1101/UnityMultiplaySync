@@ -12,6 +12,7 @@ public class GameManager : MonoBehaviour
     public int targetFrameRate;
     public string version = "1.0.0";
     public int latency = 2;
+    public string gameId;
 
     [Header("# Player Info")]
     public uint playerId;
@@ -69,8 +70,15 @@ public class GameManager : MonoBehaviour
         gameTime += Time.deltaTime;
     }
 
+    #region ID값 Setter
     public void SetUserId(string userId)
     {
         this.userId = userId;
     }
+
+    public void SetGameId(string gameId)
+    {
+        this.gameId = gameId;
+    }
+    #endregion
 }

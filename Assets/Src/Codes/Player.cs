@@ -49,7 +49,7 @@ public class Player : MonoBehaviour
 
         // 위치 이동 패킷 전송 -> 서버로
         // 잠시 끄기
-        //NetworkManager.instance.SendLocationUpdatePacket(rigid.position.x, rigid.position.y);
+        NetworkManager.instance.SendLocationUpdatePacket(rigid.position.x, rigid.position.y);
     }
 
 

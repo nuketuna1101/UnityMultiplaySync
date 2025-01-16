@@ -87,6 +87,12 @@ public class LocationUpdate
     [ProtoMember(1)]
     public List<UserLocation> users { get; set; }
 
+    // 초기화 하기위함
+    public LocationUpdate()
+    {
+        users = new List<UserLocation>();
+    }
+
     [ProtoContract]
     public class UserLocation
     {

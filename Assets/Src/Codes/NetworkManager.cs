@@ -2,6 +2,7 @@ using System;
 using System.Buffers;
 using System.Collections;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
@@ -205,8 +206,7 @@ public class NetworkManager : MonoBehaviour
     public void SendLocationUpdatePacket(float x, float y) {
         LocationUpdatePayload locationUpdatePayload = new LocationUpdatePayload
         {
-            // 임시 게임아이디
-            gameId = GameManager.instance.deviceId,
+            gameId = GameManager.instance.gameId,
             x = x,
             y = y,
         };
@@ -298,18 +298,23 @@ public class NetworkManager : MonoBehaviour
         if (response.data != null && response.data.Length > 0) {
             // init 패킷 응답
             if (response.handlerId == 0) {
-                GameManager.instance.GameStart();
-                string stringUserId = Encoding.UTF8.GetString(response.data);
-                Debug.Log("[InitialResponse] stringUserId: " + stringUserId);
+                //GameManager.instance.GameStart();
                 string userId = ParseResponseData(response.data, "userId");
                 Debug.Log("[InitialResponse] UserId: " + userId);
+                // userId 값 받아와서 setter
                 GameManager.instance.SetUserId(userId);
                 // 게임 생성 패킷 전송
                 SendCreateGamePacket();
             }
+            // CreateGame 응답
             if (response.handlerId == 4)
             {
-                Debug.Log("[CreateGameResponse] create game response");
+                string gameId = ParseResponseData(response.data, "gameId");
+                Debug.Log("[CreateGameResponse] gameId: " + gameId);
+                // gameId 값 받아와서 setter
+                GameManager.instance.SetGameId(gameId);
+                //
+                GameManager.instance.GameStart();
             }
             ProcessResponseData(response.data);
         }
@@ -374,18 +379,49 @@ public class NetworkManager : MonoBehaviour
 
     void HandleLocationPacket(byte[] data) {
         try {
+            //Debug.Log("[HandleLocationPacket] called, data.Length : " + data.Length);
+            //Debug.Log("[HandleLocationPacket] is null? : " + (data == null));
+            LocationUpdate response = Packets.Deserialize<LocationUpdate>(data);
+            Debug.Log("is response null? : "+ (response == null));
+            Debug.Log("response.users?.Count: " + response.users?.Count);
+
+            if (response.users.Count > 0)
+            {
+                // 각 사용자에 대해 위치 처리
+                foreach (var user in response.users)
+                {
+                    Debug.Log($"[HandleLocationPacket] id: {user.id} / playerId: {user.playerId} / x: {user.x} / y: {user.y}");
+                }
+            }
+            var tmp = new LocationUpdate { users = new List<LocationUpdate.UserLocation>() };
+
+            // 사용자 위치 정보 스폰
+            //Spawner.instance.Spawn(data.Length > 0 ? response : tmp);
+            /*
+            #region LEGACY HANDLELOCATIONPACKET
+            //Debug.Log("[HandleLocationPacket] called, data.Length : " + data.Length);
+            //Debug.Log("[HandleLocationPacket] is null? : " + (data == null));
             LocationUpdate response;
 
-            if (data.Length > 0) {
+            if (data.Length > 0)
+            {
                 // 패킷 데이터 처리
                 response = Packets.Deserialize<LocationUpdate>(data);
-            } else {
+            }
+            else
+            {
                 // data가 비어있을 경우 빈 배열을 전달
                 response = new LocationUpdate { users = new List<LocationUpdate.UserLocation>() };
             }
 
+            // 현재 이부분에 인덱스 에러
+            Debug.Log($"data.users count: {response.users?.Count}");
+
             Spawner.instance.Spawn(response);
-        } catch (Exception e) {
+            #endregion
+            */
+        }
+        catch (Exception e) {
             Debug.LogError($"Error HandleLocationPacket: {e.Message}");
         }
     }
