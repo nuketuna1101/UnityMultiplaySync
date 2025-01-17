@@ -224,6 +224,7 @@ public class NetworkManager : MonoBehaviour
 
         SendPacket(createGamePayload, (uint)Packets.HandlerIds.CreateGame);
     }
+
     //=======================================================================================================
     #endregion
 
@@ -276,6 +277,9 @@ public class NetworkManager : MonoBehaviour
                     break;
                 case Packets.PacketType.Location:
                     HandleLocationPacket(packetData);
+                    break;
+                case Packets.PacketType.Ping:
+                    HandlePingPacket(packetData);
                     break;
             }
         }
@@ -396,7 +400,7 @@ public class NetworkManager : MonoBehaviour
             var tmp = new LocationUpdate { users = new List<LocationUpdate.UserLocation>() };
 
             // 사용자 위치 정보 스폰
-            //Spawner.instance.Spawn(data.Length > 0 ? response : tmp);
+            Spawner.instance.Spawn(data.Length > 0 ? response : tmp);
             /*
             #region LEGACY HANDLELOCATIONPACKET
             //Debug.Log("[HandleLocationPacket] called, data.Length : " + data.Length);
@@ -429,13 +433,6 @@ public class NetworkManager : MonoBehaviour
     // Ping 패킷 처리
     void HandlePingPacket(byte[] data)
     {
-        try
-        {
-
-        }
-        catch (Exception e)
-        {
-            Debug.LogError($"Error HandlePingPacket: {e.Message}");
-        }
+        Debug.Log("[Ping] ");
     }
 }
